@@ -18,7 +18,6 @@ body {
 
 /* Safe area bawah (iPhone) */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-.mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
 /* --- Utilities --- */
 .amber-gradient {
@@ -38,8 +37,6 @@ body {
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--amber); }
 .hide-scroll::-webkit-scrollbar { display: none; }
-.custom-scrollbar-option::-webkit-scrollbar { width: 8px; }
-.custom-scrollbar-option::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 4px; }
 
 /* --- Components --- */
 .card-hover {
@@ -79,21 +76,33 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  height: 4px;
+  height: 3px;
   width: 0%;
   z-index: 100;
   background: linear-gradient(90deg, var(--amber), #ffce58);
   transition: width 0.15s ease;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
 
-/* Gambar komik standar */
+/* Reader UI Hide (tap gambar untuk hide/show) */
+.ui-hidden-top {
+  transform: translateY(-120%);
+  opacity: 0;
+}
+.ui-hidden-bottom {
+  transform: translateY(120%);
+  opacity: 0;
+}
+
+/* Gambar komik */
 .comic-page {
+  width: 100%;
+  height: auto;
+  display: block;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* Skeleton shimmer loader */
+/* Skeleton shimmer loader untuk halaman komik */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -110,10 +119,12 @@ body {
   100% { background-position: 0 0; }
 }
 
-/* Scroll behavior */
-.chapter-list-scroll { scroll-behavior: smooth; }
+/* Scroll behavior chapter list */
+.chapter-list-scroll {
+  scroll-behavior: smooth;
+}
 
-/* Backdrop banner */
+/* Backdrop banner anim halus */
 .backdrop-banner { filter: blur(30px); }
 .animate-pulse-slow { animation: pulseSlow 2.4s ease-in-out infinite; }
 
@@ -124,12 +135,13 @@ body {
 
 /* Fade in */
 .animate-fade-in { animation: fadeIn .25s ease-out both; }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Line clamp fallback */
+/* Line clamp fallback (kalau tailwind line-clamp tidak aktif) */
 .line-clamp-2{
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -141,32 +153,4 @@ body {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* ---- READER ENHANCEMENTS (Pengalaman Membaca Premium) ---- */
-.seamless-img {
-  display: block;
-  margin: 0 !important;
-  padding: 0 !important;
-  vertical-align: top;
-  border: none;
-  width: 100%;
-}
-
-/* Transisi menu reader pintar saat scroll */
-#reader-top, #reader-bottom {
-  will-change: transform, opacity;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ui-hidden-top {
-  transform: translateY(-150%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-.ui-hidden-bottom {
-  transform: translateY(150%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
 }
