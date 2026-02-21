@@ -1,7 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-        { "source": "/warning.html", "destination": "/warning.html" }, 
+    { "source": "/warning.html", "destination": "/warning.html" }, 
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/series/(.*)", "destination": "/index.html" },
     { "source": "/chapter/(.*)", "destination": "/index.html" },
