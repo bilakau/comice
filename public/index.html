@@ -109,7 +109,30 @@
       <i class="fa fa-history text-lg"></i><span class="text-[10px]">Riwayat</span>
     </button>
   </div>
-  <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+ <!-- Library Anti DevTools -->
+<script src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+<script>
+  DisableDevtool({
+    // 1. Redirect ke halaman warning yang baru dibuat
+    url: '/warning.html', 
+    
+    // 2. Waktu tunda (0 detik = langsung redirect)
+    timeOutUrl: 0, 
+
+    // 3. Matikan Klik Kanan (Menu Context)
+    disableMenu: true, 
+
+    // 5. Matikan shortcut keyboard browser standar (Ctrl+U, F12, Ctrl+Shift+I)
+    disableIframeParents: true,
+    
+    // 6. Deteksi jika window di-resize secara mencurigakan (biasanya saat buka inspect element di samping)
+    ondevtoolopen: function(type) {
+        // Opsional: Bisa kirim log analytics di sini kalau mau
+        window.location.href = '/warning.html';
+    }
+  });
+</script>
   <script src="script.js"></script>
 </body>
 </html>
