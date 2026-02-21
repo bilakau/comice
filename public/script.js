@@ -244,7 +244,7 @@ async function showDetail(idOrSlug, push = true) {
   let slug = idOrSlug;
   setLoading();
 
-  if (idOrSlug.length === 36) { // Jika UUID
+  if (idOrSlug.length === 36) {
     const mapping = await getSlugFromUuid(idOrSlug);
     if (mapping) slug = mapping.slug;
   }
@@ -262,7 +262,11 @@ async function showDetail(idOrSlug, push = true) {
   currentChapterList = res.chapters || [];
   currentComicContext = { slug, title: res.title, image: res.image };
 
-  const firstCh = res.chapters?.length > 0 ? res.chapters[res.chapters.length - 1].slug : null;
+  // PERBAIKAN DI SINI:
+  // Ambil chapter pertama (paling bawah/terakhir dalam array)
+  const firstCh = res.chapters?.length > 0 ? res.chapters[res.chapters.length - 1] : null;
+  // Ambil chapter terbaru (paling atas/indeks 0)
+  const latestCh = res.chapters?.length > 0 ? res.chapters[0] : null;
 
   contentArea.innerHTML = `
     <div class="fixed top-0 left-0 w-full h-[60vh] -z-10 pointer-events-none overflow-hidden">
@@ -274,11 +278,13 @@ async function showDetail(idOrSlug, push = true) {
       <div class="md:w-[280px] shrink-0 mx-auto md:mx-0">
         <img src="${res.image}" class="w-64 rounded-2xl shadow-2xl border border-white/10 mx-auto">
         <div class="flex flex-col gap-3 mt-6">
-          <button onclick="readChapter('${res.chapters?.[0]?.slug}', '${slug}')" class="amber-gradient py-3.5 rounded-xl font-bold text-black shadow-lg">
-            Baca Chapter Terbaru
+          <!-- Tombol Mulai Dari Awal -->
+          <button onclick="readChapter('${firstCh?.slug}', '${slug}')" class="amber-gradient py-3.5 rounded-xl font-bold text-black shadow-lg">
+            <i class="fa fa-book-open mr-2"></i> Mulai Baca (Ch. 1)
           </button>
-          <button onclick="toggleBookmark('${slug}', '${res.title.replace(/'/g,"")}', '${res.image}')" id="btn-bookmark" class="py-3.5 rounded-xl glass border-white/10 font-semibold">
-            Simpan Favorit
+          <!-- Tombol Lanjut Terbaru -->
+          <button onclick="readChapter('${latestCh?.slug}', '${slug}')" class="bg-white/10 hover:bg-white/20 py-3 rounded-xl font-medium transition">
+            Baca Terakhir (${latestCh?.title.split(' ')[1] || ''})
           </button>
         </div>
       </div>
@@ -295,7 +301,7 @@ async function showDetail(idOrSlug, push = true) {
 
         <div class="glass rounded-2xl border border-white/10 overflow-hidden">
           <div class="p-4 bg-white/5 flex justify-between items-center">
-            <h3 class="font-bold">Daftar Chapter (${res.chapters?.length || 0})</h3>
+            <h3 class="font-bold">Daftar Chapter</h3>
           </div>
           <div id="chapter-list-container" class="max-h-[500px] overflow-y-auto p-2">
             ${res.chapters?.map(ch => `
@@ -338,40 +344,69 @@ async function readChapter(chSlug, comicSlug = null, push = true) {
         <button onclick="showDetail('${parentSlug}')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-amber-500 hover:text-black">
           <i class="fa fa-arrow-left"></i>
         </button>
-        <h2 class="text-xs font-bold text-white truncate px-4">${res.title}</h2>
+        <h2 class="text-xs font-bold text-whiasync function readChapter(chSlug, comicSlug = null, push = true) {
+  if (isNavigating || !chSlug) return;
+  lockNav(); setLoading();
+
+  if (push) {
+    const uuid = await getUuidFromSlug(chSlug, 'chapter');
+    updateURL(`/chapter/${uuid}`);
+  }
+
+  mainNav.classList.add('-translate-y-full');
+  mobileNav.classList.add('translate-y-full');
+
+  const data = await fetchAPI(`${API_BASE}/chapter/${chSlug}`);
+  if (!data || !data.data) { redirectTo404(); unlockNav(); return; }
+
+  const res = data.data;
+  const parentSlug = comicSlug || res.allChapterSlug;
+
+  // PERBAIKAN DI SINI: 
+  // Paksa sortir array gambar berdasarkan ID agar tidak berantakan
+  const sortedImages = res.images.sort((a, b) => a.id - b.id);
+
+  contentArea.innerHTML = `
+    <div class="relative min-h-screen bg-[#0b0b0f] -mx-4 -mt-24">
+      <div id="reader-top" class="fixed top-0 w-full bg-black/80 backdrop-blur-lg z-[60] p-4 flex justify-between items-center transition-transform">
+        <button onclick="showDetail('${parentSlug}')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-amber-500 hover:text-black transition">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div class="text-center overflow-hidden px-4">
+          <h2 class="text-xs font-bold text-white truncate">${res.title}</h2>
+        </div>
         <button onclick="toggleFullScreen()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10"><i class="fa fa-expand text-xs"></i></button>
       </div>
 
       <div id="reader-images" class="flex flex-col items-center bg-[#111] min-h-screen max-w-3xl mx-auto pt-20" onclick="toggleReaderUI()">
-        ${res.images.map(img => `
-          <div class="w-full relative bg-zinc-800">
-             <img src="${img.url}" class="comic-page" loading="lazy" onerror="this.src='https://via.placeholder.com/500x800?text=Gagal+Memuat+Gambar'">
+        ${sortedImages.map(img => `
+          <div class="w-full relative bg-[#111] min-h-[300px]">
+             <img src="${img.url}" class="w-full block" loading="lazy" 
+                  onerror="this.src='https://via.placeholder.com/500x800?text=Gambar+Gagal+Dimuat'">
           </div>
         `).join('')}
       </div>
 
       <div id="reader-bottom" class="fixed bottom-6 left-0 w-full z-[60] px-4 flex justify-center transition-transform">
-        <div class="glass p-2 rounded-2xl flex gap-1 bg-black/80 backdrop-blur-xl border border-white/10">
-          <button onclick="${res.navigation?.prev ? `readChapter('${res.navigation.prev}', '${parentSlug}')` : ''}" 
-            class="w-10 h-10 rounded-xl flex items-center justify-center ${!res.navigation?.prev ? 'opacity-20' : 'hover:bg-amber-500 hover:text-black'}">
+        <div class="glass p-2 rounded-2xl flex gap-1 bg-black/90 backdrop-blur-2xl border border-white/10 shadow-2xl">
+          <button id="prev-btn" onclick="${res.navigation?.prev ? `readChapter('${res.navigation.prev}', '${parentSlug}')` : 'alert(\'Ini adalah chapter awal\')'}" 
+            class="w-12 h-12 rounded-xl flex items-center justify-center ${!res.navigation?.prev ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10'}">
             <i class="fa fa-chevron-left"></i>
           </button>
-          <div class="px-4 flex items-center">
-             <span class="text-[10px] font-bold">MODE MEMBACA</span>
+          
+          <div class="px-6 flex flex-col justify-center items-center">
+             <span class="text-[9px] text-amber-500 font-bold tracking-widest uppercase">Chapter</span>
+             <span class="text-xs font-bold">${res.title.split(' ').pop()}</span>
           </div>
-          <button onclick="${res.navigation?.next ? `readChapter('${res.navigation.next}', '${parentSlug}')` : ''}" 
-            class="w-10 h-10 rounded-xl flex items-center justify-center amber-gradient text-black ${!res.navigation?.next ? 'opacity-20' : ''}">
+
+          <button id="next-btn" onclick="${res.navigation?.next ? `readChapter('${res.navigation.next}', '${parentSlug}')` : 'alert(\'Sudah chapter terbaru\')'}" 
+            class="w-12 h-12 rounded-xl flex items-center justify-center amber-gradient text-black font-bold">
             <i class="fa fa-chevron-right"></i>
           </button>
         </div>
       </div>
     </div>
   `;
-
-  if (parentSlug && currentChapterList.length === 0) {
-     const pData = await fetchAPI(`${API_BASE}/detail/${parentSlug}`);
-     if (pData) currentChapterList = pData.data?.chapters || [];
-  }
 
   saveHistory(parentSlug, res.thumbnail?.title, res.thumbnail?.url, chSlug, res.title);
   setProgress(100);
